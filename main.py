@@ -10,7 +10,8 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 def get_git_diff(repo_path="."):
     repo = git.Repo(repo_path)
-    diff = repo.git.diff("HEAD")
+    # ステージングされていない変更とステージング済みの変更の両方を取得
+    diff = repo.git.diff("HEAD", "--cached") + "\n" + repo.git.diff()
     return diff
 
 def generate_commit_message(diff):
@@ -73,16 +74,22 @@ def generate_markdown(repo_path="."):
         print(f"Markdown生成中にエラーが発生しました: {str(e)}")
         return None
 
-if __name__ == "__main__":
-    import sys
+def main():
     try:
-        # コマンドライン引数からリポジトリパスを取得
-        repo_path = sys.argv[1] if len(sys.argv) > 1 else "."
+        repo_path = input("コミットメッセージを生成したいリポジトリのパスを入力してください: ")
+        repo_path = os.path.expanduser(repo_path) if repo_path else "."
+        
+        if not os.path.exists(repo_path):
+            raise Exception(f"指定されたパスが存在しません: {repo_path}")
+            
         output_path = generate_markdown(repo_path)
         
         if output_path:
-            print(f"生成されたMarkdownファイルを開くには以下を実行してください:")
+            print(f"\n生成されたMarkdownファイルを開くには以下を実行してください:")
             print(f"open {output_path}")
+            
     except Exception as e:
         print(f"エラーが発生しました: {str(e)}")
-        print("使用方法: python main.py [リポジトリパス]")
+
+if __name__ == "__main__":
+    main()
